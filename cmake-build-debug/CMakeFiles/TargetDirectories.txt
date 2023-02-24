@@ -1,3 +1,0 @@
-C:/Users/10313/CLionProjects/net-tools/cmake-build-debug/CMakeFiles/net_tools.dir
-C:/Users/10313/CLionProjects/net-tools/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/10313/CLionProjects/net-tools/cmake-build-debug/CMakeFiles/rebuild_cache.dir

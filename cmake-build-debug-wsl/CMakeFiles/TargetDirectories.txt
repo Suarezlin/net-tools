@@ -1,3 +1,0 @@
-/mnt/c/Users/10313/CLionProjects/net-tools/cmake-build-debug-wsl/CMakeFiles/net_tools.dir
-/mnt/c/Users/10313/CLionProjects/net-tools/cmake-build-debug-wsl/CMakeFiles/edit_cache.dir
-/mnt/c/Users/10313/CLionProjects/net-tools/cmake-build-debug-wsl/CMakeFiles/rebuild_cache.dir
