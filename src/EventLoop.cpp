@@ -23,7 +23,7 @@ void EventLoop::Start() {
   std::lock_guard<std::mutex> lock(mutex);
   if (!is_start.load()) {
     is_start.store(true);
-    working_thread = std::thread(&EventLoop::ListenEvent, this);
+    working_thread = std::thread(&EventLoop::ProcessEvent, this);
   } else {
 #ifndef NDEBUG
     std::cerr << "EventLoop has already started" << std::endl;
@@ -93,7 +93,7 @@ bool EventLoop::Ready() const {
   return epoll_fd <= 0 || (is_start.load() && is_exit.load());
 }
 
-void EventLoop::ListenEvent() {
+void EventLoop::ProcessEvent() {
   assert(epoll_fd > 0);
 
   // TODO: Handle max event size
@@ -109,16 +109,18 @@ void EventLoop::ListenEvent() {
     for (int i = 0; i < nfds; i++) {
       uint32_t ready_event = ready_events[i].events;
       if (ready_event & EPOLLIN) {
-        listen_events[ready_events[i].data.fd].read_callback(listen_events[ready_events[i].data.fd]);
+        listen_events[ready_events[i].data.fd].read_callback(*this, listen_events[ready_events[i].data.fd]);
       } else if (ready_event & EPOLLOUT) {
-        listen_events[ready_events[i].data.fd].write_callback(listen_events[ready_events[i].data.fd]);
+        listen_events[ready_events[i].data.fd].write_callback(*this, listen_events[ready_events[i].data.fd]);
       } else if (ready_event & (EPOLLERR | EPOLLHUP)) {
 #ifndef NDEBUG
         std::cout << "Handle " << ready_events[i].data.fd << " EPOLLERR/EPOLLHUP" << std::endl;
 #endif
+        mutex.lock();
         close(ready_events[i].data.fd);
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, ready_events[i].data.fd, nullptr);
         listen_events.erase(ready_events[i].data.fd);
+        mutex.unlock();
       }
       else {
         std::cout << "Unknown event: " << ready_event << std::endl;
@@ -144,11 +146,11 @@ Result EventLoop::Enable(int fd, uint32_t event_type, Event::Callback callback) 
   int epoll_operation {0};
   if (it != listen_events.end()) {
     event = it->second;
-    event.mask |= (event_type | EPOLLET);
+    event.mask |= event_type;
     event.read_callback = callback;
     epoll_operation = EPOLL_CTL_MOD;
   } else {
-    event = Event{fd, event_type | EPOLLET, callback};
+    event = Event{fd, event_type, callback};
     epoll_operation = EPOLL_CTL_ADD;
   }
 

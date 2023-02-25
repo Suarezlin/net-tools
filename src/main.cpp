@@ -12,7 +12,7 @@ int main() {
     exit(errno);
   }
 
-  event_loop.EnableRead(fd, [](const ziniu::Event &event) {
+  event_loop.EnableRead(fd, [](ziniu::EventLoop &loop, const ziniu::Event &event) {
     char buf[1024];
     int len = 0;
     do {

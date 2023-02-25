@@ -20,7 +20,7 @@ enum class Result {
 class Event {
  public:
 
-  using Callback = std::function<void(const Event &)>;
+  using Callback = std::function<void(EventLoop &, const Event &)>;
 
   Event() = default;
 
@@ -61,7 +61,7 @@ class EventLoop {
   std::thread working_thread;
   std::mutex mutex;
 
-  void ListenEvent();
+  void ProcessEvent();
 
   Result Enable(int fd, uint32_t event_type, Event::Callback callback);
 
