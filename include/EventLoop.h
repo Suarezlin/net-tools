@@ -36,6 +36,10 @@ class Event {
 class EventLoop {
  public:
   EventLoop();
+  ~EventLoop();
+
+  EventLoop(const EventLoop &) = delete;
+  EventLoop &operator=(const EventLoop &) = delete;
 
   void Start();
 

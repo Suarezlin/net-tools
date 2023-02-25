@@ -18,6 +18,13 @@ EventLoop::EventLoop() {
 #endif
 }
 
+EventLoop::~EventLoop() {
+  if (is_start.load() && !is_exit.load()) {
+    Stop();
+    listen_events.clear();
+  }
+}
+
 // TODO: thread creation error handle
 void EventLoop::Start() {
   std::lock_guard<std::mutex> lock(mutex);
@@ -130,7 +137,13 @@ void EventLoop::ProcessEvent() {
       break;
     }
   }
+
+  mutex.lock();
   close(epoll_fd);
+  for (auto &it : listen_events) {
+    close(it.first);
+  }
+  mutex.unlock();
 }
 
 Result EventLoop::Enable(int fd, uint32_t event_type, Event::Callback callback) {
