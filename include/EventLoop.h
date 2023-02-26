@@ -20,17 +20,26 @@ enum class Result {
 class Event {
  public:
 
-  using Callback = std::function<void(EventLoop &, const Event &)>;
+  using Callback = std::function<void(EventLoop &, const Event &, void *)>;
 
   Event() = default;
 
-  Event(int fd, uint32_t mask, Callback read_callback = nullptr, Callback write_callback = nullptr)
-      : fd(fd), mask(mask), read_callback(std::move(read_callback)), write_callback(std::move(write_callback)) {}
+  Event(int fd,
+        uint32_t mask,
+        Callback read_callback = nullptr,
+        Callback write_callback = nullptr,
+        void *args = nullptr)
+      : fd(fd),
+        mask(mask),
+        read_callback(std::move(read_callback)),
+        write_callback(std::move(write_callback)),
+        args(args) {}
 
-  int fd {};
-  uint32_t mask {};
+  int fd{};
+  uint32_t mask{};
   Callback read_callback;
   Callback write_callback;
+  void *args;
 };
 
 class EventLoop {
@@ -45,9 +54,9 @@ class EventLoop {
 
   void Stop();
 
-  Result EnableRead(int fd, Event::Callback callback);
+  Result EnableRead(int fd, Event::Callback callback, void *args = nullptr);
 
-  Result EnableWrite(int fd, Event::Callback callback);
+  Result EnableWrite(int fd, Event::Callback callback, void *args = nullptr);
 
   Result DisableRead(int fd);
 
@@ -58,18 +67,22 @@ class EventLoop {
   bool Ready() const;
 
  private:
-  int epoll_fd {};
-  std::unordered_map<int, Event> listen_events {};
-  std::atomic_bool is_start {false};
-  std::atomic_bool is_exit { false };
+  int epoll_fd{};
+  int signal_fd{};
+  std::unordered_map<int, Event> listen_events{};
+  std::atomic_bool is_start{false};
+  std::atomic_bool is_exit{false};
+  std::atomic_bool exited{false};
   std::thread working_thread;
-  std::mutex mutex;
+  std::recursive_mutex mutex;
 
   void ProcessEvent();
 
-  Result Enable(int fd, uint32_t event_type, Event::Callback callback);
+  Result Enable(int fd, uint32_t event_type, Event::Callback callback, void *args = nullptr);
 
   Result Disable(int fd, uint32_t event_type);
+
+  void WakeUp();
 };
 
 }
